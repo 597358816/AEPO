@@ -53,10 +53,6 @@ Experiments were conducted on **Qwen2.5-Math-7B** using the **EasyR1** and **VeR
 
 ## 🧩 Method Overview
 
-<div align="center">
-<img src="docs/aepo_diagram.png" width="500">
-</div>
-
 AEPO integrates into standard GRPO-style RFT pipelines as follows:
 
 ```math
