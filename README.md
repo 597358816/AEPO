@@ -76,3 +76,17 @@ T_{high}, & \text{if } H(\pi_{\theta_{old}}) < H_{target} \\
 T_{low}, & \text{otherwise}
 \end{cases}
 ```
+
+
+## Requirements
+
+### Software
+
+Install via pip:
+
+```bash
+pip install torch==2.6.0 torchaudio==2.6.0 torchvision==0.21.0 vllm==0.8.3 transformers==4.51.2
+pip install flash-attn
+pip install -e .
+pip install tensorboard
+```
