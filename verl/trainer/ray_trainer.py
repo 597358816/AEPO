@@ -789,7 +789,7 @@ class RayPPOTrainer:
                         elif entropy > entropy_base:  
                             temperature = self.config.trainer.temperature_low    
                         gen_batch_bak.meta_info["temperature"] = temperature
-                        gen_batch_bak.meta_info["n"] = 5   
+                        gen_batch_bak.meta_info["n"] = self.config.worker.rollout.n   
                         with _timer("gen", timing_raw):  
                             gen_batch_output_bak = self.actor_rollout_wg.generate_sequences(gen_batch_bak)
                         batch_bak = batch_bak.union(gen_batch_output_bak)    
