@@ -84,5 +84,6 @@ trainer:
   val_generations_to_log: 3
   save_freq: 10  # -1 to disable
   save_limit: 20  # -1 to disable
+  algorithm: grpo
   save_checkpoint_path: null
   load_checkpoint_path: null

@@ -728,7 +728,7 @@ class RayPPOTrainer:
         self.logger = Tracker(loggers=self.config.trainer.logger, config=self.config.to_dict())
         self.global_step = 0
         entropy = 0
-        entropy_base = 0.5
+        entropy_base = self.config.trainer.entropy_base
         val_metrics: Optional[Dict[str, Any]] = None
 
         # load checkpoint before doing anything
@@ -780,13 +780,14 @@ class RayPPOTrainer:
                     self._compute_values(batch, timing_raw)
                     self._compute_adv(batch, timing_raw)
 
-                    alg = "AEPO"              
+                    alg = self.config.trainer.algorithm           
                     if alg=="AEPO":
                         temperature = 1
+                        entropy_base = self.config.trainer.entropy_base
                         if entropy <= entropy_base:
-                            temperature = 1.2
+                            temperature = self.config.trainer.temperature_high
                         elif entropy > entropy_base:  
-                            temperature = 0.8     
+                            temperature = self.config.trainer.temperature_low    
                         gen_batch_bak.meta_info["temperature"] = temperature
                         gen_batch_bak.meta_info["n"] = 5   
                         with _timer("gen", timing_raw):  

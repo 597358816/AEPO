@@ -81,6 +81,10 @@ class TrainerConfig:
     save_limit: int = -1
     save_checkpoint_path: Optional[str] = None
     load_checkpoint_path: Optional[str] = None
+    algorithm: str = "grpo"
+    temperature_high: float = 1.2
+    temperature_low: float = 0.8
+    entropy_base: float = 0.5
 
     def post_init(self):
         if self.save_checkpoint_path is None:
