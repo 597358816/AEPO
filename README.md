@@ -1,174 +1,78 @@
-# EasyR1: An Efficient, Scalable, Multi-Modality RL Training Framework
+# Arbitrary Entropy Policy Optimization (AEPO)
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/EasyR1)](https://github.com/hiyouga/EasyR1/stargazers)
-[![Twitter](https://img.shields.io/twitter/follow/llamafactory_ai)](https://twitter.com/llamafactory_ai)
+**Entropy Is Controllable in Reinforcement Finetuning**
 
-This project is a clean fork of the original [veRL](https://github.com/volcengine/verl) project to support vision language models, we thank all the authors for providing such a high-performance RL training framework.
+[![Paper](https://img.shields.io/badge/Paper-PDF-blue)]([[2510.08141] Arbitrary Entropy Policy Optimization: Entropy Is Controllable in Reinforcement Fine-tuning](https://arxiv.org/abs/2510.08141))
+[![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
 
-EasyR1 is efficient and scalable due to the design of **[HybirdEngine](https://arxiv.org/abs/2409.19256)** and the latest release of **[vLLM](https://github.com/vllm-project/vllm)**'s SPMD mode.
+---
 
-## Features
+## 🧠 Introduction
 
-- Supported models
-  - Llama3/Qwen2/Qwen2.5 language models
-  - Qwen2/Qwen2.5-VL vision language models
-  - DeepSeek-R1 distill models
+**Arbitrary Entropy Policy Optimization (AEPO)** is a novel reinforcement finetuning (RFT) framework designed to address *entropy collapse* — a critical issue in large language model (LLM) post-training where exploration vanishes as entropy monotonically decreases.
 
-- Supported algorithms
-  - GRPO
-  - Reinforce++
-  - ReMax
-  - RLOO
+Unlike traditional entropy regularization methods that trade exploration for stability, **AEPO achieves controllable and stable entropy regulation** through three unified design principles:
 
-- Supported datasets
-  - Any text, vision-text dataset in a [specific format](#custom-dataset)
+1. **Policy Gradient as Regularization**
+   Replaces explicit entropy bonuses with a REINFORCE-style policy gradient term applied to temperature-adjusted samples.
+2. **Distribution as Regularization**
+   Controls entropy implicitly by sampling from *temperature-regulated* distributions (`T_high` and `T_low`) based on current entropy state.
+3. **REINFORCE as Regularization**
+   Uses verifiable rewards to form one-sided, unbiased gradients that guide policy toward higher-quality distributions.
 
-- Supported tricks
-  - Padding-free training
-  - Resuming from checkpoint
-  - Wandb & SwanLab & Mlflow & Tensorboard tracking
+---
 
-## Requirements
+## 🚀 Highlights
 
-### Software Requirements
+- **Controllable Entropy:**
+  Precisely maintains entropy at any arbitrary target level `H`, completely eliminating entropy collapse.
+- **Entropy–Exploration–Performance Relation:**
+  Demonstrates a *non-monotonic* relationship — performance improves with moderate entropy but declines when entropy becomes excessive.
+- **Generalizable Framework:**
+  Beyond entropy control, AEPO provides a paradigm for learning under target distributions, generalizing to multimodal alignment and reasoning tasks.
 
-- Python 3.9+
-- transformers>=4.51.0
-- flash-attn>=2.4.3
-- vllm>=0.8.3
+---
 
-We provide a [Dockerfile](./Dockerfile) to easily build environments.
+## 📊 Experimental Results
 
-We recommend using the [pre-built docker image](https://hub.docker.com/r/hiyouga/verl) in EasyR1.
+Experiments were conducted on **Qwen2.5-Math-7B** using the **EasyR1** and **VeRL** frameworks, across seven reasoning benchmarks:
+`AIME24`, `AMC`, `College Math`, `GSM8K`, `MATH`, `Minerva`, `Olympiad`.
 
-```bash
-docker pull hiyouga/verl:ngc-th2.6.0-cu126-vllm0.8.3-flashinfer0.2.2-cxx11abi0
+
+| Model             | Avg. Score | Entropy Stability |
+| :---------------- | :--------: | :---------------: |
+| Qwen2.5-Math-7B   |   37.66   |        —        |
+| GRPO              |   57.96   |    ❌ Collapse    |
+| Entropy-Reg       |   57.39   |   ⚠️ Unstable   |
+| Entropy-Adv       |   58.18   |    ❌ Collapse    |
+| **AEPO (H=0.75)** | **61.36** |     ✅ Stable     |
+
+> 📈 AEPO outperforms all entropy-based baselines and achieves stable exploration at arbitrary entropy targets.
+
+---
+
+## 🧩 Method Overview
+
+<div align="center">
+<img src="docs/aepo_diagram.png" width="500">
+</div>
+
+AEPO integrates into standard GRPO-style RFT pipelines as follows:
+
+```math
+\nabla_\theta J_{AEPO} =
+\nabla_\theta J_{GRPO} +
+\alpha \cdot \mathbb{E}_{q,o \sim \pi_\theta^T}
+\left[\nabla_\theta \log \pi_\theta(o|q) \cdot R(q,o)\right],
 ```
 
-### Hardware Requirements
 
-\* *estimated*
+where the temperature `T` switches adaptively according to the current entropy state of the policy:
 
-| Method                   | Bits |  1.5B  |   3B   |   7B   |   32B   |
-| ------------------------ | ---- | ------ | ------ | ------ | ------- |
-| GRPO Full Fine-Tuning    |  AMP | 2*24GB | 4*40GB | 8*40GB | 16*80GB |
-| GRPO Full Fine-Tuning    | BF16 | 1*24GB | 1*40GB | 4*40GB |  8*80GB |
-
-> [!NOTE]
-> Use `worker.actor.fsdp.torch_dtype=bf16` and `worker.actor.optim.strategy=adamw_bf16` to enable bf16 training.
->
-> We are working hard to reduce the VRAM in RL training, LoRA support will be integrated in next updates.
-
-## Tutorial: Run Qwen2.5-VL GRPO on [Geometry3K](https://huggingface.co/datasets/hiyouga/geometry3k) Dataset in Just 3 Steps
-
-![image](assets/qwen2_5_vl_7b_geo.png)
-
-### Installation
-
-```bash
-git clone https://github.com/hiyouga/EasyR1.git
-cd EasyR1
-pip install -e .
-```
-
-### GRPO Training
-
-```bash
-bash examples/qwen2_5_vl_7b_geo3k_grpo.sh
-```
-
-### Merge Checkpoint in Hugging Face Format
-
-```bash
-python3 scripts/model_merger.py --local_dir checkpoints/easy_r1/exp_name/global_step_1/actor
-```
-
-> [!TIP]
-> If you encounter issues with connecting to Hugging Face, consider using `export HF_ENDPOINT=https://hf-mirror.com`.
->
-> If you want to use SwanLab logger, consider using `bash examples/qwen2_5_vl_7b_geo3k_swanlab.sh`.
-
-## Custom Dataset
-
-Please refer to the example datasets to prepare your own dataset.
-
-- Text dataset: https://huggingface.co/datasets/hiyouga/math12k
-- Vision-text dataset: https://huggingface.co/datasets/hiyouga/geometry3k
-
-> [!TIP]
-> EasyR1 already supports multi-image dataset.
-
-## How to Understand GRPO in EasyR1
-
-![image](assets/easyr1_grpo.png)
-
-- To learn about the GRPO algorithm, you can refer to [Hugging Face's blog](https://huggingface.co/docs/trl/v0.15.2/en/grpo_trainer).
-
-## How to Run 70B+ Model in Multi-node Environment
-
-Please see the **[veRL's official doc](https://verl.readthedocs.io/en/latest/start/multinode.html)** for multi-node training and Ray debugger.
-
-## Other Baselines
-
-We also reproduced the following two baselines of the [R1-V](https://github.com/deep-agent/R1-V) project.
-- [CLEVR-70k-Counting](examples/baselines/qwen2_5_vl_3b_clevr.sh): Train the Qwen2.5-VL-3B-Instruct model on counting problem.
-- [GeoQA-8k](examples/baselines/qwen2_5_vl_3b_geoqa8k.sh): Train the Qwen2.5-VL-3B-Instruct model on GeoQA problem.
-
-## Awesome Work using EasyR1
-
-- **MMR1**: Advancing the Frontiers of Multimodal Reasoning. [![[code]](https://img.shields.io/github/stars/LengSicong/MMR1)](https://github.com/LengSicong/MMR1)
-- **Vision-R1**: Incentivizing Reasoning Capability in Multimodal Large Language Models. [![[code]](https://img.shields.io/github/stars/Osilly/Vision-R1)](https://github.com/Osilly/Vision-R1) [![[arxiv]](https://img.shields.io/badge/arxiv-2503.06749-blue)](https://arxiv.org/abs/2503.06749)
-- **Seg-Zero**: Reasoning-Chain Guided Segmentation via Cognitive Reinforcement. [![[code]](https://img.shields.io/github/stars/dvlab-research/Seg-Zero)](https://github.com/dvlab-research/Seg-Zero) [![[arxiv]](https://img.shields.io/badge/arxiv-2503.06520-blue)](https://arxiv.org/abs/2503.06520)
-- **MetaSpatial**: Reinforcing 3D Spatial Reasoning in VLMs for the Metaverse. [![[code]](https://img.shields.io/github/stars/PzySeere/MetaSpatial)](https://github.com/PzySeere/MetaSpatial) [![[arxiv]](https://img.shields.io/badge/arxiv-2503.18470-blue)](https://arxiv.org/abs/2503.18470)
-- **Temporal-R1**: Envolving Temporal Reasoning Capability into LMMs via Temporal Consistent Reward
- [![[code]](https://img.shields.io/github/stars/appletea233/Temporal-R1)](https://github.com/appletea233/Temporal-R1)
-## TODO
-
-- Support LoRA (high priority).
-- Support ulysses parallelism for VLMs (middle priority).
-- Support more VLM architectures.
-
-> [!NOTE]
-> We will not provide scripts for supervised fine-tuning and inference in this project. If you have such requirements, we recommend using [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory).
-
-### Known bugs
-
-These features are temporarily disabled for now, we plan to fix them one-by-one in the future updates.
-
-- Vision language models are not compatible with ulysses parallelism yet.
-
-## Discussion Group
-
-👋 Join our [WeChat group](assets/wechat.jpg).
-
-## FAQs
-
-> RuntimeError: CUDA Error: out of memory at /workspace/csrc/cumem_allocator.cpp:62
-
-Reduce the `worker.rollout.gpu_memory_utilization`.
-
-## Citation
-
-Core contributors: [Yaowei Zheng](https://github.com/hiyouga), [Junting Lu](https://github.com/AL-377), [Shenzhi Wang](https://github.com/Shenzhi-Wang), [Zhangchi Feng](https://github.com/BUAADreamer), [Dongdong Kuang](https://github.com/Kuangdd01) and Yuwen Xiong
-
-We also thank Guangming Sheng and Chi Zhang for helpful discussions.
-
-```bibtex
-@misc{zheng2025easyr1,
-  title        = {EasyR1: An Efficient, Scalable, Multi-Modality RL Training Framework},
-  author       = {Yaowei Zheng, Junting Lu, Shenzhi Wang, Zhangchi Feng, Dongdong Kuang, Yuwen Xiong},
-  howpublished = {\url{https://github.com/hiyouga/EasyR1}},
-  year         = {2025}
-}
-```
-
-We recommend to also cite the original work.
-
-```bibtex
-@article{sheng2024hybridflow,
-  title   = {HybridFlow: A Flexible and Efficient RLHF Framework},
-  author  = {Guangming Sheng and Chi Zhang and Zilingfeng Ye and Xibin Wu and Wang Zhang and Ru Zhang and Yanghua Peng and Haibin Lin and Chuan Wu},
-  year    = {2024},
-  journal = {arXiv preprint arXiv: 2409.19256}
-}
+```math
+T =
+\begin{cases}
+T_{high}, & \text{if } H(\pi_{\theta_{old}}) < H_{target} \\
+T_{low}, & \text{otherwise}
+\end{cases}
 ```
