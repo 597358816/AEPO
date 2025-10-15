@@ -799,7 +799,10 @@ class RayPPOTrainer:
                         self._compute_adv(batch_bak, timing_raw)
                         entropy_controller = _select_by_advantage(batch_bak, threshold = 0.05, absolute=False)
                         entropy_controller.batch["advantages"] = torch.ones_like(entropy_controller.batch["advantages"])
-                        sample_num = min(60, len(entropy_controller))  
+                        if entropy <= entropy_base:
+                            sample_num = min(self.config.trainer.reinforce_sample_num, len(entropy_controller))
+                        elif entropy > entropy_base:  
+                            sample_num = min(self.config.trainer.reinforce_sample_num, len(entropy_controller))  
                         entropy_batch = DataProto.concat([entropy_controller[:sample_num], batch[sample_num:]])
                         self._compute_old_log_probs(entropy_batch, timing_raw)
                         self._compute_ref_log_probs(entropy_batch, timing_raw)
