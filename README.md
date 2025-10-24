@@ -62,7 +62,6 @@ AEPO integrates into standard GRPO-style RFT pipelines as follows:
 \left[\nabla_\theta \log \pi_\theta(o|q) \cdot R(q,o)\right],
 ```
 
-
 where the temperature `T` switches adaptively according to the current entropy state of the policy:
 
 ```math
@@ -73,7 +72,6 @@ T_{low}, & \text{otherwise}
 \end{cases}
 ```
 
-
 ## Requirements
 
 ### Software
@@ -81,8 +79,15 @@ T_{low}, & \text{otherwise}
 Install via pip:
 
 ```bash
-pip install torch==2.6.0 torchaudio==2.6.0 torchvision==0.21.0 vllm==0.8.3 transformers==4.51.2
+conda create -n AEPO python=3.10
+conda activate AEPO
+git clone https://github.com/597358816/AEPO.git
+cd AEPO
+pip install torch==2.6.0 torchaudio==2.6.0 torchvision==0.21.0 vllm==0.8.3 transformers==4.51.2 
+pip install ray==2.48.0 tensordict==0.9.1 pydantic==2.11.7
 pip install flash-attn
 pip install -e .
 pip install tensorboard
+cd example
+bash qwen-math-7b-AEPO.sh
 ```
