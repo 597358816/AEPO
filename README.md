@@ -91,3 +91,9 @@ pip install tensorboard
 cd example
 bash qwen-math-7b-AEPO.sh
 ```
+
+### Evaluation
+
+The eval code is in：[https://github.com/QwenLM/Qwen2.5-Math](https://github.com/QwenLM/Qwen2.5-Math).
+The rollout temperature is 0 or 0.3.
+Eval is on pass@1.
