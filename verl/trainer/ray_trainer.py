@@ -808,7 +808,7 @@ class RayPPOTrainer:
                         self._compute_ref_log_probs(entropy_batch, timing_raw)
                         self._update_critic(entropy_batch, timing_raw, metrics)
                         self._update_actor(entropy_batch, timing_raw, metrics) 
-                    elif alg=="grpo":                   
+                    elif alg=="GRPO":                   
                         self._compute_old_log_probs(batch, timing_raw)
                         self._compute_ref_log_probs(batch, timing_raw)
                         self._update_critic(batch, timing_raw, metrics)

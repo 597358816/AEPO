@@ -7,12 +7,16 @@ FORMAT_PROMPT="""You FIRST think about the reasoning process as an internal mono
 
 python3 -m verl.trainer.main \
     config=config.yaml \
-    data.train_files=BytedTsinghua-SIA/DAPO-Math-17k \
+    data.train_files=./train_dapo.parquet \
     data.val_files=hiyouga/math12k@test \
     data.format_prompt="${FORMAT_PROMPT}" \
     worker.actor.model.model_path=${MODEL_PATH} \
-    trainer.experiment_name=name \
+    trainer.experiment_name=test \
     trainer.algorithm=AEPO \
     trainer.entropy_base=0.5 \
-    trainer.n_gpus_per_node=8 
+    trainer.n_gpus_per_node=8 \
+    trainer.total_episodes=10
+
+    #trainer.algorithm=GRPO (default is GRPO)
+
 

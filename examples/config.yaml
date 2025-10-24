@@ -72,7 +72,7 @@ worker:
     score_function: ./score_function/math.py:math_compute_score
 
 trainer:
-  total_episodes: 3
+  total_episodes: 10
   logger: ["console","wandb"]
   project_name: AEPO
   experiment_name: name
