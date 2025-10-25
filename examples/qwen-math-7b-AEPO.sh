@@ -14,9 +14,13 @@ python3 -m verl.trainer.main \
     trainer.experiment_name=test \
     trainer.algorithm=AEPO \
     trainer.entropy_base=0.5 \
+    trainer.reinforce_sample_num=60 \
     trainer.n_gpus_per_node=8 \
     trainer.total_episodes=10
 
-    #trainer.algorithm=GRPO (default is GRPO)
+    #trainer.algorithm=GRPO #default is GRPO
+    #trainer.entropy_base is the entropy threshold H.
+    #trainer.reinforce_sample_num is the sample for entropy control, which should be set as small as possible when entropy is controllable.
+
 
 
