@@ -802,7 +802,7 @@ class RayPPOTrainer:
                         if entropy <= entropy_base:
                             sample_num = min(self.config.trainer.reinforce_sample_num, len(entropy_controller))
                         elif entropy > entropy_base:  
-                            sample_num = min(self.config.trainer.reinforce_sample_num, len(entropy_controller)) / 2 
+                            sample_num = min(self.config.trainer.reinforce_sample_num, len(entropy_controller)) // 2 
                         entropy_batch = DataProto.concat([entropy_controller[:sample_num], batch[sample_num:]])
                         self._compute_old_log_probs(entropy_batch, timing_raw)
                         self._compute_ref_log_probs(entropy_batch, timing_raw)
