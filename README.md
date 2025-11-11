@@ -79,7 +79,7 @@ T_{low}, & \text{otherwise}
 Install via pip:
 
 ```bash
-conda create -n AEPO python=3.10
+conda create -n AEPO python=3.11
 conda activate AEPO
 git clone https://github.com/597358816/AEPO.git
 cd AEPO
