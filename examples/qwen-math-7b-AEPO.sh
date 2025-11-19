@@ -10,6 +10,7 @@ python3 -m verl.trainer.main \
     data.train_files=./train_dapo.parquet \
     data.val_files=hiyouga/math12k@test \
     data.format_prompt="${FORMAT_PROMPT}" \
+    algorithm.disable_kl=true \
     worker.actor.model.model_path=${MODEL_PATH} \
     trainer.experiment_name=test \
     trainer.algorithm=AEPO \
