@@ -787,12 +787,14 @@ class RayPPOTrainer:
                         if entropy <= entropy_base:
                             temperature = self.config.trainer.temperature_high
                         elif entropy > entropy_base:  
-                            temperature = self.config.trainer.temperature_low    
+                            temperature = self.config.trainer.temperature_low 
+                        gen_batch_bak = gen_batch_bak[:len(gen_batch_bak) // 4]
                         gen_batch_bak.meta_info["temperature"] = temperature
                         gen_batch_bak.meta_info["n"] = self.config.worker.rollout.n   
+                        
                         with _timer("gen", timing_raw):  
                             gen_batch_output_bak = self.actor_rollout_wg.generate_sequences(gen_batch_bak)
-                        batch_bak = batch_bak.union(gen_batch_output_bak)    
+                        batch_bak = batch_bak[:len(batch_bak) // 4].union(gen_batch_output_bak) 
                         self._compute_reward(batch_bak, timing_raw, metrics)
                         batch_bak.meta_info["global_token_num"] = torch.sum(batch_bak.batch["attention_mask"], dim=-1).tolist()
                         self._compute_values(batch_bak, timing_raw)
