@@ -810,6 +810,30 @@ class RayPPOTrainer:
                         self._compute_ref_log_probs(entropy_batch, timing_raw)
                         self._update_critic(entropy_batch, timing_raw, metrics)
                         self._update_actor(entropy_batch, timing_raw, metrics) 
+                    elif alg=="DCPO":  
+                        temperature = 1          
+                        if entropy <= entropy_base:
+                            temperature = 1.2
+                        elif entropy > entropy_base:     
+                            temperature = 0.8   
+                        entropy_delta = entropy_base-entropy
+                        _compute_bool_reward_by_score(batch, threshold = 0.05, absolute=False)
+                        self._compute_old_log_probs(batch, timing_raw)
+                        self._compute_old_log_probs(batch, timing_raw, temperature = temperature)
+                        old_log_probs = batch.batch['old_log_probs']
+                        old_log_probs_t = batch.batch['old_log_probs_t']
+                        entropy_factor = torch.exp(old_log_probs_t - old_log_probs)
+                        true_ratio = (batch.batch["bool_reward"]==1).sum() / len(batch)
+                        print("batch.batch['bool_reward'].shape:", batch.batch['bool_reward'].shape)
+                        alpha = entropy_delta 
+                        alpha = abs(alpha)
+                        alpha = min(alpha, 0.1)
+                        alpha = alpha / true_ratio
+                        alpha = alpha / (alpha + 1)
+                        batch.batch["advantages"] = (1-alpha) * batch.batch["advantages"] + alpha * batch.batch["bool_reward"].to(batch.batch["advantages"].dtype).unsqueeze(1) * entropy_factor
+                        self._compute_ref_log_probs(batch, timing_raw)
+                        self._update_critic(batch, timing_raw, metrics)
+                        self._update_actor(batch, timing_raw, metrics)
                     elif alg=="GRPO":                   
                         self._compute_old_log_probs(batch, timing_raw)
                         self._compute_ref_log_probs(batch, timing_raw)
